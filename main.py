@@ -1,5 +1,6 @@
 # file main.py
-
+import os
+import redis
 import time
 from fastapi import Request
 from fastapi import FastAPI, Depends, HTTPException
@@ -15,8 +16,20 @@ from src.routes import auth, photo, comments, tags, image_links
 
 app = FastAPI()
 
+# Отримання значень хоста та порту Redis з оточення
+REDIS_HOST = os.environ.get("REDIS_HOST")
+REDIS_PORT = os.environ.get("REDIS_PORT")
+
+# Підключення до Redis
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
 @app.middleware('http')
 async def custom_middleware(request: Request, call_next):
+    # ваш middleware тут
+
+# інші маршрути та функції тут
+
+
     
     """
     The custom_middleware function is a middleware function that adds the time it took to process the request in seconds
