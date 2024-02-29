@@ -1,0 +1,22 @@
+name: Deploy to Koyeb
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Koyeb CLI
+        uses: koyeb/koyeb-cli-action@v1
+        with:
+          koyeb_api_key: ${{ secrets.KOYEB_API_KEY }}
+
+      - name: Deploy to Koyeb
+        run: koyeb deployment create

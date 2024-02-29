@@ -46,7 +46,7 @@ async def create_image_link_endpoint(photo_id: int, db: Session = Depends(get_db
 
     img = qr.make_image(fill_color="black", back_color="white")
     img_byte_arr = BytesIO()
-    img.save(img_byte_arr, format='PNG')
+    img.save(img_byte_arr, 'PNG')
     qr_code_data = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
 
     # Создание записи в базе данных
