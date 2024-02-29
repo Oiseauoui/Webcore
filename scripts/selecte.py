@@ -8,7 +8,7 @@ load_dotenv()
 dbname = os.environ.get('POSTGRES_DB')
 user = os.environ.get('POSTGRES_USER')
 password = os.environ.get('POSTGRES_PASSWORD')
-host = "localhost"  # або адреса вашого сервера PostgreSQL
+host = "ep-floral-darkness-a2gfw65c.eu-central-1.pg.koyeb.app"  # або адреса вашого сервера PostgreSQL
 port = os.environ.get('POSTGRES_PORT')  # порт за замовчуванням для PostgreSQL
 
 # Встановлення з'єднання з базою даних
