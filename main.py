@@ -19,11 +19,14 @@ app = FastAPI()
 # Отримання значень хоста та порту Redis з оточення
 REDIS_HOST = os.environ.get("REDIS_HOST")
 REDIS_PORT = os.environ.get("REDIS_PORT", 6380)
+print("REDIS_PORT:", REDIS_PORT)
 
 
 
 # Підключення до Redis
-redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+# Підключення до Redis
+redis_client = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), decode_responses=True)
+
 
 @app.middleware('http')
 async def custom_middleware(request: Request, call_next):
