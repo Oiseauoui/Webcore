@@ -10,22 +10,19 @@ from starlette.responses import HTMLResponse
 from src.db.database import get_db
 from src.db.models import ImageLink
 from fastapi.templating import Jinja2Templates
-
-
 from src.routes import auth, photo, comments, tags, image_links
 
 app = FastAPI()
 
-# Отримання значень хоста та порту Redis з оточення
+# Fetch the Redis host from environment variable
 REDIS_HOST = os.environ.get("REDIS_HOST")
-REDIS_PORT = os.environ.get("REDIS_PORT", 6380)
-print("REDIS_PORT:", REDIS_PORT)
 
+# Fetch the Redis port from environment variable, defaulting to 6380 if not set
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6380))
 
+# Create the Redis client
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
-# Підключення до Redis
-# Підключення до Redis
-redis_client = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), decode_responses=True)
 
 
 @app.middleware('http')

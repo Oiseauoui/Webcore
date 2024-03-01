@@ -1,5 +1,7 @@
 # file models.py
 import os
+
+import redis
 from sqlalchemy import Column, Integer, String, create_engine, ForeignKey, Table, DateTime, Boolean, Enum, func #18/02/2024 Olha
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -122,3 +124,19 @@ class ImageLink(Base):
     qr_code = Column(String, nullable=True)  # Путь к файлу QR-кода
 
     photo = relationship("Photo", back_populates="image_links")
+
+
+class RedisClient:
+    def __init__(self, host, port):
+        self.host = host
+        if port is None:
+            # Handle the case where port is None
+            self.port = None
+        else:
+            try:
+                self.port = int(port)
+            except ValueError:
+                # Handle the case where port is not convertible to an integer
+                raise ValueError("Port must be a valid integer.")
+        if self.port is not None:
+            self.redis_client = redis.Redis(host=self.host, port=self.port, decode_responses=True)

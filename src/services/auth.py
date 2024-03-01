@@ -21,7 +21,8 @@ class Auth:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     ALGORITHM = os.environ.get('ALGORITHM')
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-    r = redis.Redis(host=os.environ.get('REDIS_HOST'), port=os.environ.get('REDIS'), db=0) #cash
+    r = redis.Redis(host=os.environ.get('REDIS_HOST'), port=os.environ.get('REDIS_PORT'), db=0)
+
 
     def verify_password(self, plain_password, hashed_password):
         
@@ -130,16 +131,25 @@ class Auth:
         except JWTError as e:
             raise credentials_exception       
 
-
         user = self.r.get(f"user:{email}")
         if user is None:
             user = await repository_users.get_user_by_email(email, db)
             if user is None:
                 raise credentials_exception
-            self.r.set(f"user:{email}", pickle.dumps(user))
-            self.r.expire(f"user:{email}", 900)
+
+            # Получаем хост и порт Redis из переменных окружения или устанавливаем значения по умолчанию
+            REDIS_HOST = os.environ.get("REDIS_HOST")
+            REDIS_PORT = int(os.environ.get("REDIS_PORT", 6380))
+
+            # Создаем подключение к Redis
+            redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
+            # Устанавливаем значение пользователя в Redis
+            redis_client.set(f"user:{email}", pickle.dumps(user))
+            redis_client.expire(f"user:{email}", 900)
         else:
             user = pickle.loads(user)
+
         
         #cach end
         if user is None:
