@@ -21,7 +21,7 @@ class Auth:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     ALGORITHM = os.environ.get('ALGORITHM')
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-    r = redis.Redis(host=os.environ.get('REDIS_HOST'), port=os.environ.get('REDIS_PORT'), db=0) #cash
+    r = redis.Redis(host=os.environ.get('REDIS_HOST'), port=os.environ.get('REDIS_PORT'), password=os.environ.get("REDIS_PASSWORD"), db=0) #cash
 
     def verify_password(self, plain_password, hashed_password):
 

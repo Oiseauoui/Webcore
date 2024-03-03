@@ -1,89 +1,49 @@
 import os
 import redis
 import time
+import redis.asyncio as redis
 from fastapi import Request, FastAPI, Depends, HTTPException
+from fastapi_limiter import FastAPILimiter
 from sqlalchemy.orm import Session
 from starlette.responses import HTMLResponse
+
+from conf.config import config
 from src.db.database import get_db
 from src.db.models import ImageLink
 from fastapi.templating import Jinja2Templates
 from src.routes import auth, photo, comments, tags, image_links
 
 app = FastAPI()
+templates = Jinja2Templates(directory='templates')
 
 # Fetch the Redis host from environment variable
 REDIS_HOST = os.environ.get("REDIS_HOST")
 
 # Fetch the Redis port from environment variable, defaulting to 6380 if not set
-REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 11929))
+REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD")
 
-try:
-    # Create the Redis client
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+# Create the Redis client
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD)
 
-    # Check connection
-    redis_client.ping()
-    print("Successfully connected to Redis server.")
-
-    # Attempt to get value from Redis
-    value = redis_client.get("your_key_here")
-
-    # Check if value is not None
-    if value is not None:
-        # Display the raw value without decoding
-        print("Raw value from Redis:", value)
-    else:
-        print("No value found in Redis for the specified key.")
-
-except redis.exceptions.ConnectionError as e:
-    print("Failed to connect to Redis server:", e)
-
-
+# Middleware for performance monitoring
 @app.middleware('http')
 async def custom_middleware(request: Request, call_next):
-    """
-    The custom_middleware function is a middleware function that adds the time it took to process the request in seconds
-    to the response headers. This can be used for performance monitoring.
-
-    :param request: Request: Get the request object
-    :param call_next: Call the next middleware in the chain
-    :return: A response object with a header named 'performance'
-    :doc-author: Trelent
-    """
     start_time = time.time()
     response = await call_next(request)
     during = time.time() - start_time
     response.headers['performance'] = str(during)
     return response
 
-templates = Jinja2Templates(directory='templates')
-
-# Adding handler for the root URL
+# Handler for the root URL
 @app.get("/", response_class=HTMLResponse, description="Main page")
 async def root(request: Request):
-    """
-    The root function is the entry point for all requests to the server.
-    It returns a response object that contains an HTML page with a greeting.
-
-    :param request: Request: Get the request object from the client
-    :return: A response object that contains the html of our index
-    :doc-author: Trelent
-    """
     return templates.TemplateResponse('index.html', {"request": request, "title": "Instagram Арр"})
 
+# Healthchecker route
 @app.get("/api/healthchecker")
 def healthchecker(db: Session = Depends(get_db)):
-    """
-    The healthchecker function is used to check the health of the database.
-    It will return a 200 status code if it can successfully connect to the database,
-    and a 500 status code otherwise.
-
-    :param db: Session: Pass the database session to the function
-    :return: A dictionary with a message
-    :doc-author: Trelent
-    """
     try:
-        #Make request
         result = db.execute(text("SELECT 1")).fetchone()
         if result is None:
             raise HTTPException(status_code=500, detail="Database is not configured correctly")
@@ -92,23 +52,15 @@ def healthchecker(db: Session = Depends(get_db)):
         print(e)
         raise HTTPException(status_code=500, detail="Error connecting to the database")
 
+# Route to show QR code
 @app.get("/show-qr/{photo_id}")
 async def show_qr_code(photo_id: int, request: Request, db: Session = Depends(get_db)):
-    """
-    The show_qr_code function takes a photo_id as an argument and returns the QR code associated with that photo.
-    If no such QR code exists, it raises a 404 error.
-
-    :param photo_id: int: Get the photo id from the url
-    :param request: Request: Pass the request object to the template
-    :param db: Session: Access the database
-    :return: A templateresponse object
-    :doc-author: Trelent
-    """
     image_link = db.query(ImageLink).filter(ImageLink.photo_id == photo_id).first()
     if image_link is None:
         raise HTTPException(status_code=404, detail="Image link not found")
     qr_code_data = image_link.qr_code
     return templates.TemplateResponse("qr_code_page.html", {"request": request, "qr_code_data": qr_code_data})
+
 
 # Include routers
 app.include_router(auth.router, prefix='/api')
