@@ -1,13 +1,12 @@
 import os
+from cgitb import text
+
 import redis
 import time
 import redis.asyncio as redis
 from fastapi import Request, FastAPI, Depends, HTTPException
-from fastapi_limiter import FastAPILimiter
 from sqlalchemy.orm import Session
 from starlette.responses import HTMLResponse
-
-from conf.config import config
 from src.db.database import get_db
 from src.db.models import ImageLink
 from fastapi.templating import Jinja2Templates
